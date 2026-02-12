@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SATM RESEARCH PORTAL</title>
+    <!-- 
+    GOOGLE SHEET HEADERS LIST:
+    Timestamp, Age, Gender, Academic_Level, Field_of_Study, SM_Experience, Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q9, Q10, Q11, Q12, Q13, Q14, Q15, Q16, Q17, Q18, Q19, Q20, Q21, Q22, Q23, Q24, Q25, Q26, Q27, Q28, Q29, Q30, Detox_Freq, SM_Relationship, Recommendations, Consent
+    -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@800;900&family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-blue: #3b82f6;
+            --brand-bg: #020617;
+            --glow-color: rgba(59, 130, 246, 0.6);
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--brand-bg);
+            color: #f8fafc;
+            margin: 0;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+        .heading-font {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900;
+        }
+        .glass {
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.9);
+        }
+        .glow-active {
+            box-shadow: 0 0 30px var(--glow-color) !important;
+            border-color: var(--brand-blue) !important;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            transform: scale(1.03);
+            background: rgba(59, 130, 246, 0.2) !important;
+        }
+        .progress-spring {
+            transition: width 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes subtle-float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        .option-entrance {
+            animation: slideUpFade 0.4s ease forwards;
+            opacity: 0;
+        }
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(20px); filter: blur(5px); }
+            to { opacity: 1; transform: translateY(0); filter: blur(0); }
+        }
+        .option-card:hover {
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Interactive feel for buttons */
+        .btn-glow:active {
+            box-shadow: 0 0 40px var(--glow-color);
+        }
+
+        @media (max-width: 640px) {
+            .mobile-title { font-size: 1.5rem !important; line-height: 1.2 !important; }
+            .mobile-container { padding: 1.25rem !important; min-height: auto !important; margin-top: 0 !important; }
+            .mobile-footer { margin-top: 3rem !important; }
+        }
+    </style>
+</head>
+<body class="no-scrollbar">
+    <div id="root"></div>
+
+    <script type="module">
+        import React, { useState, useRef, useMemo, useEffect } from 'https://esm.sh/react@19.2.4';
+        import ReactDOM from 'https://esm.sh/react-dom@19.2.4/client';
+        import htm from 'https://esm.sh/htm';
+        import * as Lucide from 'https://esm.sh/lucide-react@0.463.0';
+
+        const html = htm.bind(React.createElement);
+
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyUJouFz0yrhxwyZn6goVWsS0zMwwxe8h61mbrHueM-Hw_a8oBZtlVAzX-0iAeTXpNz/exec";
+
+        const LIKERT_QUESTIONS = [
+            "I have a clear understanding of who I truly am beyond social media personas",
+            "I feel authentic and genuine in my daily interactions with others",
+            "My online persona accurately reflects my true values and beliefs",
+            "I am aware of my core strengths and weaknesses",
+            "I feel disconnected from my true self when using social media",
+            "I make decisions based on my personal values rather than external pressure",
+            "I struggle to identify my genuine interests versus what I think I should like",
+            "I feel confident expressing my authentic opinions, even if they are unpopular",
+            "I understand what truly motivates me in my personal and academic life",
+            "I feel pressure to maintain a curated image on social media",
+            "I spend significant time curating my social media content",
+            "I experience anxiety when my posts don't receive expected engagement",
+            "I compare my life to others' social media presentations",
+            "Social media use interferes with my focus on academic tasks",
+            "I feel FOMO (Fear of Missing Out) when not checking social media",
+            "I modify my behavior based on what I think will get likes or comments",
+            "I feel more confident when receiving social validation online",
+            "I use social media to escape from uncomfortable emotions",
+            "My daily mood is affected by my social media interactions",
+            "I have experienced stress due to cyberbullying or negative comments",
+            "I am motivated by the desire to learn and grow personally",
+            "I pursue my academic goals because they align with my values",
+            "I would continue my studies even without grades or external rewards",
+            "I feel a sense of purpose in my current pursuits",
+            "I am driven by internal satisfaction rather than external recognition",
+            "I find my academic work meaningful and worthwhile",
+            "I set my own goals rather than following what others expect",
+            "I feel intrinsically motivated to achieve excellence",
+            "My motivation comes from personal interest, not external pressure",
+            "I feel energized when working on tasks aligned with my authentic interests"
+        ];
+
+        const App = () => {
+            const [step, setStep] = useState(0);
+            const [responses, setResponses] = useState({});
+            const [isSubmitting, setIsSubmitting] = useState(false);
+            const [isSuccess, setIsSuccess] = useState(false);
+            const [isError, setIsError] = useState(false);
+            const [consent, setConsent] = useState(false);
+
+            const surveyFlow = useMemo(() => [
+                { type: 'landing', title: 'ST PORTAL' },
+                { id: 'Age', type: 'choice', title: 'Age Range', options: ['18-20', '21-23', '24-26', '27-30', 'Above 30'] },
+                { id: 'Gender', type: 'choice', title: 'Gender', options: ['Male', 'Female', 'Non-binary', 'Prefer not to say'] },
+                { id: 'Academic_Level', type: 'choice', title: 'Academic Level', options: ['Undergraduate', 'Postgraduate', 'Doctoral'] },
+                { id: 'Field_of_Study', type: 'choice', title: 'Field of Study', options: ['Management', 'Engineering', 'Sciences', 'Arts & Humanities'] },
+                { id: 'SM_Experience', type: 'choice', title: 'SM Experience', options: ['< 2 years', '2-5 years', '5-10 years', '> 10 years'] },
+                ...LIKERT_QUESTIONS.map((q, i) => ({ id: `Q${i + 1}`, type: 'likert', title: q })),
+                { id: 'Detox_Freq', type: 'choice', title: 'Detox Frequency', options: ['Daily', 'Regularly', 'Weekly', 'Rarely', 'Never'] },
+                { id: 'SM_Relationship', type: 'text', title: 'SM & Authentic Self' },
+                { id: 'Recommendations', type: 'text', title: 'Recommendations' },
+                { type: 'submit_vault', title: 'DATA SYNC' }
+            ], []);
+
+            const current = surveyFlow[step];
+            const totalSteps = surveyFlow.length - 1;
+            const progress = (step / totalSteps) * 100;
+
+            const updateResponse = (val) => {
+                setResponses(prev => ({ ...prev, [current.id]: val }));
+                if (current.type === 'likert' || (current.type === 'choice' && current.options.length < 6)) {
+                    setTimeout(() => setStep(s => Math.min(s + 1, totalSteps)), 300);
+                }
+            };
+
+            const triggerFinalSubmit = async () => {
+                if (isSubmitting) return;
+                setIsSubmitting(true);
+                setIsError(false);
+                
+                const formData = new FormData();
+                Object.keys(responses).forEach(key => formData.append(key, responses[key]));
+                formData.append("Consent", "Yes");
+                formData.append("Timestamp", new Date().toLocaleString());
+
+                try {
+                    const response = await fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const result = await response.json();
+                    if (result.result === 'success') setIsSuccess(true);
+                    else setIsError(true);
+                } catch (err) {
+                    console.error("Submission Error:", err);
+                    setIsError(true);
+                } finally {
+                    setIsSubmitting(false);
+                }
+            };
+
+            const renderStep = () => {
+                if (isSuccess) return html`
+                    <div className="text-center py-6 animate-in fade-in zoom-in duration-700">
+                        <div className="w-16 h-16 md:w-24 md:h-24 bg-blue-600 rounded-full mx-auto flex items-center justify-center shadow-[0_0_30px_rgba(37,99,235,0.6)] mb-6">
+                            <${Lucide.Check} className="text-white w-8 h-8 md:w-12 md:h-12" strokeWidth=${5} />
+                        </div>
+                        <h2 className="heading-font text-2xl md:text-5xl uppercase italic tracking-tighter mb-2">COMPLETE</h2>
+                        <p className="text-slate-400 text-[10px] md:text-base font-bold uppercase tracking-widest mb-8">SECURE SYNC FINISHED</p>
+                        <button onClick=${() => window.location.reload()} className="px-8 py-3 bg-slate-900 border border-slate-700 rounded-lg font-black uppercase text-xs md:text-sm hover:bg-slate-800 transition-all active:scale-95">NEW SESSION</button>
+                    </div>
+                `;
+
+                if (current.type === 'landing') return html`
+                    <div className="text-center space-y-8 md:space-y-12 animate-in fade-in duration-700">
+                        <div className="space-y-2">
+                            <h1 className="heading-font text-4xl md:text-7xl uppercase italic tracking-tighter leading-none text-white glow-active inline-block px-4">ST RESEARCH</h1>
+                            <p className="text-xs md:text-xl font-bold text-slate-500 uppercase tracking-[0.2em]">Self-Authentication Portal</p>
+                        </div>
+                        <div className="max-w-sm mx-auto space-y-4">
+                            <label className="flex items-center gap-3 p-4 glass rounded-xl border border-slate-800 hover:border-blue-500 transition-all cursor-pointer group">
+                                <input type="checkbox" className="w-5 h-5 accent-blue-600 rounded" checked=${consent} onChange=${e => setConsent(e.target.checked)} />
+                                <div className="text-left">
+                                    <p className="font-black uppercase text-xs md:text-base group-hover:text-blue-400">GRANT CONSENT</p>
+                                    <p className="text-[8px] md:text-[10px] text-slate-500 uppercase font-bold tracking-widest">ENCRYPTED CHANNEL</p>
+                                </div>
+                            </label>
+                            <button disabled=${!consent} onClick=${() => setStep(1)} className="w-full py-4 bg-blue-600 text-white rounded-xl font-black text-lg md:text-2xl uppercase italic shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-20">INITIALIZE <${Lucide.Zap} className="w-4 h-4 md:w-6 md:h-6" /></button>
+                        </div>
+                    </div>
+                `;
+
+                if (current.type === 'submit_vault') return html`
+                    <div className="text-center space-y-6 py-2">
+                        <div className="relative w-20 h-20 md:w-32 md:h-32 mx-auto flex items-center justify-center">
+                            <div className="absolute inset-0 bg-blue-600 rounded-full blur-[25px] opacity-20 animate-pulse-ring"></div>
+                            <div className="relative w-full h-full glass rounded-full flex items-center justify-center border border-blue-500/50">
+                                <${isSubmitting ? Lucide.Loader2 : (isError ? Lucide.AlertTriangle : Lucide.ShieldCheck)} className=${`w-10 h-10 md:w-16 md:h-16 ${isSubmitting ? 'animate-spin text-blue-400' : (isError ? 'text-red-500' : 'text-blue-500')}`} />
+                            </div>
+                        </div>
+                        <div className="space-y-1">
+                            <h2 className="heading-font text-2xl md:text-5xl uppercase italic tracking-tighter">
+                                ${isSubmitting ? 'SYNCING...' : (isError ? 'FAILED' : 'READY')}
+                            </h2>
+                            <p className=${`text-[9px] md:text-base font-black uppercase tracking-widest ${isError ? 'text-red-500' : 'text-slate-400'}`}>
+                                ${isError ? 'NETWORK TIMEOUT' : 'UPLOAD CHANNEL OPEN'}
+                            </p>
+                        </div>
+                        <button onClick=${triggerFinalSubmit} disabled=${isSubmitting} className="w-full max-w-xs py-4 bg-blue-600 text-white rounded-xl font-black text-lg md:text-2xl uppercase italic shadow-xl">TRANSMIT DATA</button>
+                    </div>
+                `;
+
+                return html`
+                    <div className="space-y-4 md:space-y-10 animate-in slide-in-from-right-2 duration-300">
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-2 text-blue-500 font-black uppercase tracking-widest text-[8px] md:text-xs">
+                                <span className="px-1.5 py-0.5 bg-blue-600/10 border border-blue-500/20 rounded">SYNC_LOG 0${step}</span>
+                            </div>
+                            <h2 className="heading-font text-lg md:text-4xl uppercase italic tracking-tighter leading-tight mobile-title">${current.title}</h2>
+                        </div>
+                        
+                        <div className="min-h-[140px] md:min-h-[220px] flex flex-col justify-center">
+                            ${current.type === 'choice' && html`
+                                <div className="grid grid-cols-1 gap-2">
+                                    ${current.options.map((opt, i) => html`
+                                        <button key=${opt} style=${{animationDelay: `${i * 50}ms`}} onClick=${() => updateResponse(opt)} className=${`option-card option-entrance p-4 md:p-6 rounded-lg border border-slate-800 text-left flex justify-between items-center transition-all ${responses[current.id] === opt ? 'glow-active bg-blue-600 text-white' : 'bg-slate-900/40 text-slate-500'}`}>
+                                            <span className="text-[11px] md:text-xl font-black uppercase italic tracking-wide">${opt}</span>
+                                            ${responses[current.id] === opt && html`<${Lucide.CircleCheck} className="w-4 h-4 md:w-6 md:h-6" strokeWidth=${3} />`}
+                                        </button>
+                                    `)}
+                                </div>
+                            `}
+
+                            ${current.type === 'likert' && html`
+                                <div className="flex gap-1.5 md:gap-4 justify-between">
+                                    ${['1', '2', '3', '4', '5'].map((val, i) => html`
+                                        <button key=${val} style=${{animationDelay: `${i * 50}ms`}} onClick=${() => updateResponse(val)} className=${`option-card option-entrance flex-1 h-12 md:h-32 rounded-lg border border-slate-800 flex items-center justify-center font-black italic text-xl md:text-5xl ${responses[current.id] === val ? 'glow-active bg-blue-600 text-white' : 'bg-slate-900/40 text-slate-800'}`}>
+                                            ${val}
+                                        </button>
+                                    `)}
+                                </div>
+                            `}
+
+                            ${current.type === 'text' && html`
+                                <textarea autoFocus className="w-full h-32 md:h-48 p-4 md:p-8 glass rounded-xl text-xs md:text-xl font-bold uppercase placeholder:text-slate-900 outline-none focus:border-blue-500 border border-slate-900" placeholder="LOG ENTRY..." value=${responses[current.id] || ''} onChange=${e => setResponses(prev => ({...prev, [current.id]: e.target.value}))} />
+                            `}
+                        </div>
+
+                        <div className="flex flex-col md:flex-row gap-2 pt-2">
+                            <button onClick=${() => setStep(s => Math.max(0, s - 1))} className="w-full md:flex-1 py-3 md:py-4 bg-slate-950 border border-slate-800 rounded-lg font-black uppercase text-[9px] md:text-sm text-slate-600 flex items-center justify-center gap-1.5 hover:text-white"><${Lucide.ChevronLeft} className="w-3 h-3 md:w-4 md:h-4" /> PREV</button>
+                            <button onClick=${() => setStep(s => Math.min(totalSteps, s + 1))} className="w-full md:flex-[2] py-3 md:py-4 bg-blue-600 text-white rounded-lg font-black uppercase text-[9px] md:text-base italic shadow-lg flex items-center justify-center gap-1.5 active:scale-95">NEXT <${Lucide.ChevronRight} className="w-3 h-3 md:w-4 md:h-4" /></button>
+                        </div>
+                    </div>
+                `;
+            };
+
+            return html`
+                <div className="min-h-screen flex flex-col items-center py-6 md:py-12 px-4 md:px-6 max-w-4xl mx-auto relative select-none">
+                    <div className="fixed inset-0 bg-blue-900/5 blur-[80px] -z-10"></div>
+
+                    ${!isSuccess && html`
+                        <div className="w-full mb-4 flex justify-between items-center animate-in fade-in duration-500">
+                            <div className="flex items-center gap-2 md:gap-4">
+                                <div className="w-8 h-8 md:w-12 md:h-12 glass border border-blue-500/30 rounded-lg flex items-center justify-center text-blue-500"><${Lucide.Activity} className="w-4 h-4 md:w-6 md:h-6" /></div>
+                                <div className="flex flex-col"><span className="font-black uppercase tracking-widest text-[9px] md:text-lg text-white italic">LOG_HUB</span><span className="text-[6px] md:text-[8px] font-bold uppercase text-slate-600 tracking-widest">ST-CORE V7.0</span></div>
+                            </div>
+                            <div className="heading-font text-xl md:text-5xl text-white italic opacity-80">0${step} <span className="text-slate-800 mx-1">/</span> <span className="text-slate-700 text-[10px] md:text-lg font-bold not-italic">${totalSteps}</span></div>
+                        </div>
+                        
+                        <div className="w-full h-1 md:h-2 bg-slate-900/40 rounded-full mb-6 md:mb-12 p-[1px] overflow-hidden border border-slate-800/20">
+                            <div className="h-full bg-blue-600 rounded-full progress-spring shadow-[0_0_10px_var(--brand-blue)]" style=${{ width: `${progress}%` }}></div>
+                        </div>
+                    `}
+
+                    <main className=${`w-full ${isSuccess ? '' : 'glass'} rounded-2xl md:rounded-[2.5rem] p-5 md:p-12 min-h-[350px] md:min-h-[500px] flex flex-col justify-center relative transition-all duration-500 mobile-container`}>
+                        ${renderStep()}
+                    </main>
+
+                    <footer className="mt-8 md:mt-16 text-center opacity-40 mobile-footer">
+                        <p className="text-[9px] md:text-xs font-bold uppercase tracking-[0.5em] text-slate-400">ST-Research-Team</p>
+                    </footer>
+                </div>
+            `;
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(html`<${App} />`);
+    </script>
+</body>
+</html>
